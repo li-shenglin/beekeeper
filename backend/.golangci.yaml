@@ -1,0 +1,46 @@
+service:
+  golangci-lint-version: 1.50.1
+
+run:
+  skip-dirs:
+    - .*~
+    - script
+  skip-files:
+    - ".*\\.my\\.go$"
+    - _test.go
+
+linters-settings:
+  govet:
+    check-shadowing: true
+  gocyclo:
+    min-complexity: 15
+  maligned:
+    suggest-new: true
+  dupl:
+    threshold: 100
+  goconst:
+    min-len: 2
+    min-occurrences: 2
+  depguard:
+    list-type: blacklist
+    packages:
+      # logging is allowed only by logutils.Log, logrus
+      # is allowed to use only in logutils package
+      - github.com/sirupsen/logrus
+  gci:
+    # put imports beginning with prefix after 3rd-party packages;
+    # only support one prefix
+    # if not set, use goimports.local-prefixes
+    local-prefixes: github.com
+  misspell:
+    locale: US
+  lll:
+    line-length: 200
+  gocritic:
+    enabled-tags:
+      - diagnostic
+      - performance
+      - style
+      - experimental
+      - opinionated
+
