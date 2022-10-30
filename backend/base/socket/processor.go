@@ -27,33 +27,21 @@ func NewProcessor(conn net.Conn, server bool, handler Handler) *Processor {
 }
 
 func (processor *Processor) Send(message *Message) {
-	processor.queue <- message
+	_, err := processor.Conn.Write(message.GetHeader())
+	if err != nil {
+		processor.close()
+		return
+	}
+	_, err = processor.Conn.Write(message.Data)
+	if err != nil {
+		processor.close()
+		return
+	}
 }
 
 func (processor *Processor) Start() {
 	go processor.receiving()
-	go processor.sending()
 	log.Infof("Processor[%s] start", processor.Conn.RemoteAddr().String())
-}
-
-func (processor *Processor) sending() {
-	for {
-		message, ok := <-processor.queue
-		if !ok {
-			processor.close()
-			return
-		}
-		_, err := processor.Conn.Write(message.GetHeader())
-		if err != nil {
-			processor.close()
-			return
-		}
-		_, err = processor.Conn.Write(message.Data)
-		if err != nil {
-			processor.close()
-			return
-		}
-	}
 }
 
 func (processor *Processor) receiving() {
