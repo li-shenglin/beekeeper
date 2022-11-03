@@ -2,51 +2,47 @@ package socket
 
 import (
 	"backend/common"
-	"fmt"
-	"net"
 	"time"
 )
 
 type Client struct {
-	port          int32
-	ip            string
-	processorList []*Processor
+	*Application
+	address  []string
+	clientID []byte
 }
 
 func (client *Client) Run() {
-	conn, err := net.Dial("tcp", fmt.Sprintf("%s:%d", client.ip, client.port))
-	if err != nil {
-		return
+	client.instances = make([]*Instance, len(client.address))
+	for i := range client.address {
+		client.instances[i] = NewClientInstance(client.address[i], client.dispatch)
+		client.instances[i].Start()
 	}
-	processor := NewProcessor(conn, true, &ChainHandler{})
-	client.processorList = append(client.processorList, processor)
-	processor.Start()
-	data := []byte{1, 3, 4}
-	processor.Send(&Message{
-		Len:   int32(len(data)),
-		SeqID: common.UUID(),
-		Data:  data,
-		Type:  0,
-	})
-	client.checkProcessor()
+	for {
+		client.UpStatus()
+	}
 }
 
-func (client *Client) checkProcessor() {
-CHECK:
-	time.After(time.Second * 10)
-	processors := make([]*Processor, 0)
-	for i := range client.processorList {
-		if client.processorList[i].Status != Closed {
-			processors = append(processors, client.processorList[i])
+func (application *Application) UpStatus() {
+	for i := range application.instances {
+		if application.instances[i].Status == InstanceOnline {
+			invoke, err := application.instances[i].Invoke(&Parameter{
+				Opt:  0,
+				Data: []byte("Hello Server"),
+			})
+			log.Infof("err=%s, return=%s", err, invoke)
 		}
 	}
-	client.processorList = processors
-	goto CHECK
+	time.Sleep(time.Second * 5)
+
 }
 
-func NewClient(ip string, port int32) *Client {
+func NewClient(address ...string) *Client {
+	if len(address) == 0 {
+		panic("server address not found")
+	}
 	return &Client{
-		ip:   ip,
-		port: port,
+		Application: GetApplication(),
+		address:     address,
+		clientID:    common.UUID(),
 	}
 }

@@ -1,17 +1,13 @@
 package socket
 
 import (
-	LOG "backend/base/log"
 	"fmt"
 	"net"
-	"time"
 )
 
-var log = LOG.GetLog()
-
 type Server struct {
-	port          int32
-	processorList []*Processor
+	*Application
+	port int32
 }
 
 func (server *Server) Run() error {
@@ -20,34 +16,19 @@ func (server *Server) Run() error {
 		return err
 	}
 	defer listen.Close()
-	go server.checkProcessor()
 	for {
 		conn, err := listen.Accept()
 		if err != nil {
 			log.Error("Accept err=", err)
 		} else {
-			processor := NewProcessor(conn, true, &ChainHandler{})
-			server.processorList = append(server.processorList, processor)
-			processor.Start()
+			server.Add(conn)
 		}
 	}
-}
-
-func (server *Server) checkProcessor() {
-CHECK:
-	time.After(time.Second * 10)
-	processors := make([]*Processor, 0)
-	for i := range server.processorList {
-		if server.processorList[i].Status != Closed {
-			processors = append(processors, server.processorList[i])
-		}
-	}
-	server.processorList = processors
-	goto CHECK
 }
 
 func NewServer(port int32) *Server {
 	return &Server{
-		port: port,
+		Application: GetApplication(),
+		port:        port,
 	}
 }

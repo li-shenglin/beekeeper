@@ -1,12 +1,20 @@
 package socket
 
-type ProcessorStatus int8
+import LOG "backend/base/log"
+
+type InstanceStatus int8
 
 var (
-	Init        ProcessorStatus = 1
-	UnHealth    ProcessorStatus = 2
-	Established ProcessorStatus = 3
-	Sending     ProcessorStatus = 5
-	Closing     ProcessorStatus = 6
-	Closed      ProcessorStatus = 7
+	InstanceOnline    InstanceStatus = 1
+	InstanceUnHealth  InstanceStatus = 2
+	InstanceUnderLine InstanceStatus = 3
 )
+
+type InstanceModel int8
+
+var (
+	SeverInstance  InstanceModel = 1
+	ClientInstance InstanceModel = 2
+)
+
+var log = LOG.GetLog()

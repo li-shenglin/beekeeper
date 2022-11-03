@@ -3,30 +3,29 @@ package socket
 import (
 	"fmt"
 	"net"
+	"sync"
 	"time"
 )
 
 type Processor struct {
 	Conn        net.Conn
-	IsServer    bool
 	ConnectTime time.Time
-	Status      ProcessorStatus
-	handler     Handler
-	queue       chan *Message
+	instance    *Instance
+	lock        *sync.Mutex
 }
 
-func NewProcessor(conn net.Conn, server bool, handler Handler) *Processor {
+func NewProcessor(conn net.Conn, instance *Instance) *Processor {
 	return &Processor{
 		Conn:        conn,
-		IsServer:    server,
 		ConnectTime: time.Now(),
-		Status:      Init,
-		handler:     handler,
-		queue:       make(chan *Message, 8),
+		instance:    instance,
+		lock:        &sync.Mutex{},
 	}
 }
 
 func (processor *Processor) Send(message *Message) {
+	processor.lock.Lock()
+	defer processor.lock.Unlock()
 	_, err := processor.Conn.Write(message.GetHeader())
 	if err != nil {
 		processor.close()
@@ -41,7 +40,8 @@ func (processor *Processor) Send(message *Message) {
 
 func (processor *Processor) Start() {
 	go processor.receiving()
-	log.Infof("Processor[%s] start", processor.Conn.RemoteAddr().String())
+	log.Debugf("Processor[%s] start", processor.Conn.RemoteAddr())
+	processor.instance.Status = InstanceOnline
 }
 
 func (processor *Processor) receiving() {
@@ -59,7 +59,7 @@ func (processor *Processor) receiving() {
 			return
 		}
 		message.Data = data
-		processor.handler.Accept(message, processor)
+		processor.instance.Accept(message, processor)
 	}
 }
 
@@ -77,8 +77,8 @@ func (processor *Processor) read(len int) ([]byte, error) {
 }
 
 func (processor *Processor) close() {
-	log.Infof("Processor[%s] close", processor.Conn.RemoteAddr().String())
-	processor.Status = Closing
+	log.Debugf("Processor[%s] close", processor.Conn.RemoteAddr())
 	_ = processor.Conn.Close()
-	processor.Status = Closed
+	processor.instance.Status = InstanceUnHealth
+	processor.instance.processor = nil
 }
