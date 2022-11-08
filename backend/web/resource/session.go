@@ -1,21 +1,26 @@
-package web
+package resource
 
 import (
 	"backend/base/rest"
+	"backend/persist/repository"
+	"backend/web/util"
 
 	"github.com/gin-gonic/gin"
 )
 
 type SessionHandler struct {
+	userRepository repository.User
 }
 
 func NewSessionHandler() *SessionHandler {
-	return &SessionHandler{}
+	return &SessionHandler{
+		userRepository: repository.NewUser(),
+	}
 }
 
 type SessionPost struct {
-	ID   *string
-	Pass *string
+	ID   string `json:"id"`
+	Pass string `json:"pass"`
 }
 
 func (handler *SessionHandler) POST(context *gin.Context) (interface{}, *rest.HttpError) {
@@ -24,7 +29,16 @@ func (handler *SessionHandler) POST(context *gin.Context) (interface{}, *rest.Ht
 	if err != nil {
 		return nil, rest.Err400(err.Error())
 	}
-	return param, nil
+	user := handler.userRepository.FindByNameAndPass(param.ID, param.Pass)
+	if user == nil {
+		return nil, rest.Err400("ID/Pass error")
+	}
+	token, err := util.GenerateToken(user.ID, user.NickName)
+	if err != nil {
+		return nil, rest.Err500(err.Error())
+	}
+	context.SetCookie(util.JwtKey, token, 3600, "/", "", false, true)
+	return "", nil
 }
 
 func (handler *SessionHandler) GET(context *gin.Context) (interface{}, *rest.HttpError) {

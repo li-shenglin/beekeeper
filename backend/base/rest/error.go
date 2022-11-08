@@ -11,6 +11,10 @@ type HttpError struct {
 }
 
 func (err *HttpError) Error() string {
+	return err.msg
+}
+
+func (err *HttpError) String() string {
 	return fmt.Sprintf("{code: %d, msg: \"%s\"}", err.code, err.msg)
 }
 

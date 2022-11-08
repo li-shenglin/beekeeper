@@ -2,6 +2,7 @@ package rest
 
 import (
 	"backend/base/log"
+	"backend/web/filter"
 	"fmt"
 	h "net/http"
 	"time"
@@ -56,6 +57,7 @@ func (app *Application) Run() error {
 
 func (app *Application) configLog() {
 	lg := log.GetLog()
+	_ = app.router.Use(filter.JWT())
 	_ = app.router.Use(func(c *gin.Context) {
 		start := time.Now()
 		path := c.Request.URL.Path
@@ -150,9 +152,15 @@ func (app *Application) write(context *gin.Context, res interface{}, err *HttpEr
 		if res == nil {
 			return
 		}
-		context.JSON(h.StatusOK, res)
+		context.JSON(h.StatusOK, gin.H{
+			"isSuccess": true,
+			"data":      res,
+		})
 	} else {
-		context.JSON(err.code, err)
+		context.JSON(err.code, gin.H{
+			"isSuccess": false,
+			"error":     err.Error(),
+		})
 	}
 }
 
