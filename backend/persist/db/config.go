@@ -2,6 +2,7 @@ package db
 
 import (
 	"backend/common"
+	"sync"
 	"time"
 
 	"gorm.io/driver/mysql"
@@ -16,16 +17,22 @@ var (
 	MaxLifetime = time.Hour
 )
 
+var db *gorm.DB
+var dbOnce = sync.Once{}
+
 func GetDB() *gorm.DB {
-	if Type == "mysql" {
-		db, err := gorm.Open(mysql.Open(Url), &gorm.Config{})
-		common.PanicNotNull(err)
-		sqlDB, err := db.DB()
-		common.PanicNotNull(err)
-		sqlDB.SetMaxIdleConns(MaxIdleConn)
-		sqlDB.SetMaxOpenConns(MaxOpenConn)
-		sqlDB.SetConnMaxLifetime(MaxLifetime)
-		return db
-	}
-	return nil
+	dbOnce.Do(func() {
+		if Type == "mysql" {
+			d, err := gorm.Open(mysql.Open(Url), &gorm.Config{})
+			common.PanicNotNull(err)
+			sqlDB, err := d.DB()
+			common.PanicNotNull(err)
+			sqlDB.SetMaxIdleConns(MaxIdleConn)
+			sqlDB.SetMaxOpenConns(MaxOpenConn)
+			sqlDB.SetConnMaxLifetime(MaxLifetime)
+			db = d
+		}
+	})
+
+	return db
 }

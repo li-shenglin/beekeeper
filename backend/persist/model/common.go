@@ -3,14 +3,24 @@ package model
 type Role string
 
 var (
-	Read  Role = "Read"
-	Write Role = "Write"
-	Admin Role = "Admin"
+	Read         Role = "Read"
+	ReadAndWrite Role = "ReadAndWrite"
+	Admin        Role = "Admin"
+	Owner        Role = "Owner"
 )
 
 type DocType string
 
 var (
 	DIR DocType = "DIR"
-	API DocType = "API"
+
+	GET    DocType = "GET"
+	POST   DocType = "POST"
+	PUT    DocType = "PUT"
+	DELETE DocType = "DELETE"
+	PATCH  DocType = "PATCH"
+
+	HEAD    DocType = "HEAD"
+	OPTIONS DocType = "OPTIONS"
+	TRACE   DocType = "TRACE"
 )

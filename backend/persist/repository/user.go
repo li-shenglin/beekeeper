@@ -21,7 +21,7 @@ func NewUser() User {
 
 func (u *UserImpl) FindByNameAndPass(name, password string) *model.User {
 	user := model.User{}
-	_ = u.db.Where("name = ? AND pass_word = ?", name, password).Find(&user)
+	_ = u.db.Where("account = ? AND pass_word = ?", name, password).Find(&user)
 	if user.ID == 0 {
 		return nil
 	}

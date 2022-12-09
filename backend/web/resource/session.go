@@ -33,7 +33,7 @@ func (handler *SessionHandler) POST(context *gin.Context) (interface{}, *rest.Ht
 	if user == nil {
 		return nil, rest.Err400("ID/Pass error")
 	}
-	token, err := util.GenerateToken(user.ID, user.NickName)
+	token, err := util.GenerateToken(user.ID, user.Name)
 	if err != nil {
 		return nil, rest.Err500(err.Error())
 	}
