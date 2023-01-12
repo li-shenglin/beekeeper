@@ -13,7 +13,7 @@ import (
 )
 
 func NewDocTest() Doc {
-	db.Url = util.GetEnv("testDB", "")
+	db.Url = util.GetEnv("testDB")
 	db := db.GetDB()
 	db.Logger = logger.Default.LogMode(logger.Error)
 	db.AutoMigrate(&model.Doc{}, &model.DocVersion{})

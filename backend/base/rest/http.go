@@ -13,25 +13,25 @@ import (
 )
 
 type GETHandler interface {
-	GET(context *gin.Context) (interface{}, *HttpError)
+	GET(context *gin.Context) (interface{}, error)
 }
 type POSTHandler interface {
-	POST(context *gin.Context) (interface{}, *HttpError)
+	POST(context *gin.Context) (interface{}, error)
 }
 type PUTHandler interface {
-	PUT(context *gin.Context) (interface{}, *HttpError)
+	PUT(context *gin.Context) (interface{}, error)
 }
 type DELETEHandler interface {
-	DELETE(context *gin.Context) (interface{}, *HttpError)
+	DELETE(context *gin.Context) (interface{}, error)
 }
 type PATCHHandler interface {
-	PATCH(context *gin.Context) (interface{}, *HttpError)
+	PATCH(context *gin.Context) (interface{}, error)
 }
 type HEADEHandler interface {
-	HEAD(context *gin.Context) (interface{}, *HttpError)
+	HEAD(context *gin.Context) (interface{}, error)
 }
 type OPTIONSHandler interface {
-	OPTIONS(context *gin.Context) (interface{}, *HttpError)
+	OPTIONS(context *gin.Context) (interface{}, error)
 }
 
 type Application struct {
@@ -147,7 +147,7 @@ func (app *Application) options(url string, handler interface{}) {
 	}
 }
 
-func (app *Application) write(context *gin.Context, res interface{}, err *HttpError) {
+func (app *Application) write(context *gin.Context, res interface{}, err error) {
 	if err == nil {
 		if res == nil {
 			return
@@ -157,10 +157,17 @@ func (app *Application) write(context *gin.Context, res interface{}, err *HttpEr
 			"data":      res,
 		})
 	} else {
-		context.JSON(err.code, gin.H{
-			"isSuccess": false,
-			"error":     err.Error(),
-		})
+		if e, ok := err.(*HttpError); ok {
+			context.JSON(e.code, gin.H{
+				"isSuccess": false,
+				"message":   e.Error(),
+			})
+		} else {
+			context.JSON(h.StatusInternalServerError, gin.H{
+				"isSuccess": false,
+				"error":     err.Error(),
+			})
+		}
 	}
 }
 

@@ -12,6 +12,7 @@ type Project interface {
 	UpdateProject(project *model.Project) error
 	FindByUser(userID int64) ([]model.Project, error)
 	DelProject(projectID int64) error
+	GetProject(projectID uint) (*model.Project, error)
 
 	FindProjectRoleByUser(userID int64) ([]model.UserProject, error)
 	FindProjectRoleByProject(projectID int64) ([]model.UserProject, error)
@@ -83,6 +84,13 @@ func (p *ProjectImpl) FindByUser(userID int64) ([]model.Project, error) {
 
 	res := new([]model.Project)
 	return *res, p.db.Find(res, pids).Error
+}
+
+func (p *ProjectImpl) GetProject(projectID uint) (*model.Project, error) {
+	project := model.Project{}
+	project.ID = uint(projectID)
+	tx := p.db.First(&project)
+	return &project, tx.Error
 }
 
 func NewProject() Project {

@@ -9,6 +9,10 @@ import (
 
 type User interface {
 	FindByNameAndPass(name, password string) *model.User
+	CreateUser(user *model.User) (uint, error)
+	UpdateUser(user *model.User) error
+	DeleteUser(userID uint) error
+	GetUser(userID uint) (*model.User, error)
 }
 
 type UserImpl struct {
@@ -26,4 +30,33 @@ func (u *UserImpl) FindByNameAndPass(name, password string) *model.User {
 		return nil
 	}
 	return &user
+}
+
+func (u *UserImpl) CreateUser(user *model.User) (uint, error) {
+	tx := u.db.Create(user)
+	if tx.Error != nil {
+		return 0, tx.Error
+	}
+	return user.ID, nil
+}
+
+func (u *UserImpl) UpdateUser(user *model.User) error {
+	tx := u.db.Updates(user)
+	return tx.Error
+}
+
+func (u *UserImpl) DeleteUser(userID uint) error {
+	tx := u.db.Delete(&model.User{
+		Model: gorm.Model{
+			ID: userID,
+		},
+	})
+	return tx.Error
+}
+
+func (u *UserImpl) GetUser(userID uint) (*model.User, error) {
+	user := model.User{}
+	user.ID = userID
+	tx := u.db.First(&user)
+	return &user, tx.Error
 }

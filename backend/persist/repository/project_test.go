@@ -89,7 +89,7 @@ func TestFindByUser(t *testing.T) {
 }
 
 func TestProject(t *testing.T) {
-	db.Url = util.GetEnv("testDB", "")
+	db.Url = util.GetEnv("testDB")
 	db := db.GetDB()
 	db.Logger = logger.Default.LogMode(logger.Info)
 	//db.AutoMigrate(&model.UserProject{}, &model.Project{})
